@@ -105,14 +105,26 @@ public class LuaParserTest
     @Test
     public void testFunctionCalls() throws Exception
     {
-      print(Work.<LuaParser>generateParser("zzz[i]()").functioncall());
-      print(Work.<LuaParser>generateParser("e[i]():f(x,y,z):g(x,y,z)").functioncall());
-//        print(Work.<LuaParser>generateParser("a(x,y,z) b(x,y,z) c(x,y,z) d(x,y,z)").chunk());
-//        print(Work.<LuaParser>generateParser("zzz[i]()").chunk());
-//        print(Work.<LuaParser>generateParser("val = e[i]()").chunk());
-//        print(Work.<LuaParser>generateParser("val = e[i]():f(x,y,z):g(x,y,z)").chunk());
-//        print(Work.<LuaParser>generateParser("a, b = 1, (f())").chunk());
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FOO (VAR i))) (ARGS EXPLIST))", parse("zzz[i]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FOO (FUNCALL (FUNCALL (VAR a) (ARGSWITHSELF b (EXPLIST (VAR x)))) (ARGSWITHSELF c (EXPLIST (VAR y)))))) (ARGS EXPLIST))", parse("zzz[a:b(x):c(y)]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (SINGLE (FUNCALL (VAR z) (ARGS EXPLIST))) (FOO (VAR i))) (ARGS EXPLIST))", parse("(z())[i]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FOO (FUNCALL (DEREF (VAR b) (FOO (VAR j))) (ARGS (EXPLIST (VAR x)))))) (ARGS EXPLIST))", parse("zzz[b[j](x)]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (FUNCALL (FUNCALL (DEREF (VAR e) (FOO (VAR i))) (ARGS EXPLIST)) (ARGSWITHSELF f (EXPLIST (VAR x) (VAR y) (VAR z)))) (ARGSWITHSELF g (EXPLIST (VAR x) (VAR y) (VAR z))))", parse("e[i]():f(x,y,z):g(x,y,z)", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (FUNCALL (FUNCALL (VAR a) (ARGSWITHSELF x EXPLIST)) (ARGSWITHSELF y EXPLIST)) (ARGSWITHSELF z EXPLIST))", parse("a:x():y():z()", rule("functioncall")));
+
+        print(Work.<LuaParser>generateParser("a:b(x):c(y)[i](x, y, z)").functioncall());
     }
+
+    @Test
+    public void testChunk() throws Exception
+    {
+        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (ASSIGN (VARLIST (VAR val)) (EXPLIST (FUNCALL (FUNCALL (FUNCALL (DEREF (VAR e) (FOO (VAR i))) (ARGS EXPLIST)) (ARGSWITHSELF f (EXPLIST (VAR x) (VAR y) (VAR z)))) (ARGSWITHSELF g (EXPLIST (VAR x) (VAR y) (VAR z))))))))", parse("val = e[i]():f(x,y,z):g(x,y,z)", rule("chunk")));
+        //        print(Work.<LuaParser>generateParser("a(x,y,z) b(x,y,z) c(x,y,z) d(x,y,z)").chunk());
+        //        print(Work.<LuaParser>generateParser("zzz[i]()").chunk());
+        //        print(Work.<LuaParser>generateParser("val = e[i]()").chunk());
+        //        print(Work.<LuaParser>generateParser("a, b = 1, (f())").chunk());
+    }
+
 
     public void test() throws Exception
     {

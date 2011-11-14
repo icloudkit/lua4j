@@ -176,13 +176,50 @@ varlist
     ;
 
 var
-    : (NAME -> ^(VAR NAME)) (varEnd -> ^(DEREF ^(VAR NAME) varEnd+))*
-    | '(' exp ')' varEnd+ -> ^(DEREF exp varEnd+)
+    : NAME nameAndArgs* '[' exp ']' (nameAndArgs* '[' exp ']')*
+    | NAME nameAndArgs* '.' NAME (nameAndArgs* '.' NAME)*
+
+    | varPrefix '.' NAME varEnd*
+    | NAME '.' NAME varEnd*
+
+    | NAME -> ^(VAR NAME)
+    | '(' exp ')' nameAndArgs* '[' exp ']' (nameAndArgs* '[' exp ']')*
+    | '(' exp ')' nameAndArgs* '.' NAME (nameAndArgs* '.' NAME)*
+    ;
+
+varPrefix
+    : (NAME nameAndArgs-> ^(FUNCALL NAME nameAndArgs)) (naa=nameAndArgs -> ^(FUNCALL $varPrefix $naa))*
     ;
 
 varEnd
     : nameAndArgs* '[' exp ']' -> ^(FOO nameAndArgs* exp)
     | nameAndArgs* '.' NAME -> ^(DEREF nameAndArgs* NAME)
+    ;
+
+prefixexp
+    : (varOrExp nameAndArgs -> ^(FUNCALL varOrExp nameAndArgs)) (naa=nameAndArgs ->  ^(FUNCALL $prefixexp $naa))*
+    | varOrExp
+    ;
+
+functioncall
+    : (varOrExp nameAndArgs -> ^(FUNCALL varOrExp nameAndArgs)) (naa=nameAndArgs ->  ^(FUNCALL $functioncall $naa))*
+    ;
+
+varOrExp
+    : var
+    | '(' exp ')' -> ^(SINGLE exp)
+    ;
+
+nameAndArgs
+    : args -> ^(ARGS args)
+    | ':' NAME args -> ^(ARGSWITHSELF NAME args)
+    ;
+
+args
+    : '(' ')' -> ^(EXPLIST)
+    | '(' explist ')' -> explist
+    | tableconstructor
+    | string
     ;
 
 namelist
@@ -215,7 +252,7 @@ compare
 concatenation
     : add_sub (add_sub_op^ add_sub)*
     ;
-	
+
 add_sub
     : b (b_op^ b)*
     ;
@@ -238,39 +275,13 @@ atom 	: 'nil'
         | '...'
 	;
 
-unary_op : 'not' | '#' | '-' -> NEGATE ;	
+unary_op : 'not' | '#' | '-' -> NEGATE ;
 
 b_op : '*' | '/' | '%' ;
-	 		
+
 compare_op : '<' | '<=' | '>' | '>=' | '==' | '~=' ;
-	
+
 add_sub_op : '+' | '-' ;
-
-prefixexp
-    : varOrExp nameAndArgs+ -> ^(FUNCALL varOrExp nameAndArgs+)
-    | varOrExp
-    ;
-
-functioncall
-    : varOrExp nameAndArgs+ -> ^(FUNCALL varOrExp nameAndArgs+)
-    ;
-
-varOrExp
-    : var
-    | '(' exp ')' -> ^(SINGLE exp)
-    ;
-
-nameAndArgs
-    : args -> ^(ARGS args)
-    | ':' NAME args -> ^(ARGSWITHSELF NAME args)
-    ;
-
-args
-    : '(' ')' -> ^(EXPLIST)
-    | '(' explist ')' -> explist
-    | tableconstructor
-    | string
-    ;
 
 function
     : 'function' funcbody
