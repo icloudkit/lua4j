@@ -36,6 +36,7 @@ tokens {
     FNAMETHIS;
     FUNCALL;
     FUNCTION;
+    FUNCBODY;
     IF;
     LOCAL;
     NAMELIST;
@@ -46,7 +47,6 @@ tokens {
     REPEAT;
     RETURN;
     SINGLE;
-    STATEMENTS;
     STRING;
     TBLCTOR;
     TBLFIELD;
@@ -126,11 +126,11 @@ protected String toAscii(String... d) throws RecognitionException
 }
 
 chunk
-    : (stat ';'? -> ^(CHUNK ^(STATEMENTS stat+)))* (laststat ';'?-> ^(CHUNK ^(STATEMENTS stat+ laststat)))?
+    : (stat ';'?)* (laststat ';'?)? -> ^(CHUNK stat* laststat?)
     ;
 
 block
-    : chunk -> ^(BLOCK chunk)
+    : chunk
     ;
 
 stat
@@ -148,7 +148,7 @@ stat
     | 'for' namelist 'in' explist 'do' block 'end' -> ^(FORIN namelist explist block)
     | 'function' funcname funcbody -> ^(FUNCTION funcname funcbody)
     | 'local' namelist ('=' explist)? -> ^(LOCAL namelist explist?)
-    | 'local' 'function' NAME funcbody
+    | 'local' 'function' NAME funcbody -> ^(LOCAL  ^(NAMELIST NAME) ^(EXPLIST funcbody))
     ;
 
 elseif
@@ -277,11 +277,11 @@ compare_op : '<' | '<=' | '>' | '>=' | '==' | '~=' ;
 add_sub_op : '+' | '-' ;
 
 function
-    : 'function' funcbody
+    : 'function' funcbody -> funcbody
     ;
 
 funcbody
-    : '(' parlist? ')' block 'end'
+    : '(' parlist? ')' block 'end' -> ^(FUNCBODY parlist? block)
 	;
 
 parlist
