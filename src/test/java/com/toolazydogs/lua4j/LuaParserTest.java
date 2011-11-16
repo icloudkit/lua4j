@@ -105,27 +105,33 @@ public class LuaParserTest
     @Test
     public void testFunctionCalls() throws Exception
     {
-        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FOO (VAR i))) (ARGS EXPLIST))", parse("zzz[i]()", rule("functioncall")));
-        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FOO (FUNCALL (FUNCALL (VAR a) (ARGSWITHSELF b (EXPLIST (VAR x)))) (ARGSWITHSELF c (EXPLIST (VAR y)))))) (ARGS EXPLIST))", parse("zzz[a:b(x):c(y)]()", rule("functioncall")));
-        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (SINGLE (FUNCALL (VAR z) (ARGS EXPLIST))) (FOO (VAR i))) (ARGS EXPLIST))", parse("(z())[i]()", rule("functioncall")));
-        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FOO (FUNCALL (DEREF (VAR b) (FOO (VAR j))) (ARGS (EXPLIST (VAR x)))))) (ARGS EXPLIST))", parse("zzz[b[j](x)]()", rule("functioncall")));
-        assertTree(LuaParser.FUNCALL, "(FUNCALL (FUNCALL (FUNCALL (DEREF (VAR e) (FOO (VAR i))) (ARGS EXPLIST)) (ARGSWITHSELF f (EXPLIST (VAR x) (VAR y) (VAR z)))) (ARGSWITHSELF g (EXPLIST (VAR x) (VAR y) (VAR z))))", parse("e[i]():f(x,y,z):g(x,y,z)", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (SINGLE (FUNCALL (VAR f) (ARGS EXPLIST))) (ARGS EXPLIST))", parse("(f())()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (VAR i)) (ARGS EXPLIST))", parse("zzz[i]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FUNCALL (FUNCALL (VAR a) (ARGSWITHSELF b (EXPLIST (VAR x)))) (ARGSWITHSELF c (EXPLIST (VAR y))))) (ARGS EXPLIST))", parse("zzz[a:b(x):c(y)]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (SINGLE (FUNCALL (VAR z) (ARGS EXPLIST))) (VAR i)) (ARGS EXPLIST))", parse("(z())[i]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (VAR zzz) (FUNCALL (DEREF (VAR b) (VAR j)) (ARGS (EXPLIST (VAR x))))) (ARGS EXPLIST))", parse("zzz[b[j](x)]()", rule("functioncall")));
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (FUNCALL (FUNCALL (DEREF (VAR e) (VAR i)) (ARGS EXPLIST)) (ARGSWITHSELF f (EXPLIST (VAR x) (VAR y) (VAR z)))) (ARGSWITHSELF g (EXPLIST (VAR x) (VAR y) (VAR z))))", parse("e[i]():f(x,y,z):g(x,y,z)", rule("functioncall")));
         assertTree(LuaParser.FUNCALL, "(FUNCALL (FUNCALL (FUNCALL (VAR a) (ARGSWITHSELF x EXPLIST)) (ARGSWITHSELF y EXPLIST)) (ARGSWITHSELF z EXPLIST))", parse("a:x():y():z()", rule("functioncall")));
-
-        print(Work.<LuaParser>generateParser("a:b(x):c(y)[i](x, y, z)").functioncall());
+        assertTree(LuaParser.FUNCALL, "(FUNCALL (DEREF (FUNCALL (FUNCALL a (ARGSWITHSELF b (EXPLIST (VAR x)))) (ARGSWITHSELF c (EXPLIST (VAR y)))) (VAR i)) (ARGS (EXPLIST (VAR x) (VAR y) (VAR z))))", parse("a:b(x):c(y)[i](x, y, z)", rule("functioncall")));
     }
 
     @Test
     public void testChunk() throws Exception
     {
-        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (ASSIGN (VARLIST (VAR val)) (EXPLIST (FUNCALL (FUNCALL (FUNCALL (DEREF (VAR e) (FOO (VAR i))) (ARGS EXPLIST)) (ARGSWITHSELF f (EXPLIST (VAR x) (VAR y) (VAR z)))) (ARGSWITHSELF g (EXPLIST (VAR x) (VAR y) (VAR z))))))))", parse("val = e[i]():f(x,y,z):g(x,y,z)", rule("chunk")));
-        //        print(Work.<LuaParser>generateParser("a(x,y,z) b(x,y,z) c(x,y,z) d(x,y,z)").chunk());
-        //        print(Work.<LuaParser>generateParser("zzz[i]()").chunk());
-        //        print(Work.<LuaParser>generateParser("val = e[i]()").chunk());
-        //        print(Work.<LuaParser>generateParser("a, b = 1, (f())").chunk());
+        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (ASSIGN (VARLIST (VAR val)) (EXPLIST (FUNCALL (FUNCALL (FUNCALL (DEREF (VAR e) (VAR i)) (ARGS EXPLIST)) (ARGSWITHSELF f (EXPLIST (VAR x) (VAR y) (VAR z)))) (ARGSWITHSELF g (EXPLIST (VAR x) (VAR y) (VAR z))))))))", parse("val = e[i]():f(x,y,z):g(x,y,z)", rule("chunk")));
+        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (FUNCALL (VAR a) (ARGS (EXPLIST (VAR x) (VAR y) (VAR z)))) (FUNCALL (VAR b) (ARGS (EXPLIST (VAR x) (VAR y) (VAR z)))) (FUNCALL (VAR c) (ARGS (EXPLIST (VAR x) (VAR y) (VAR z)))) (FUNCALL (VAR d) (ARGS (EXPLIST (VAR x) (VAR y) (VAR z))))))", parse("a(x,y,z) b(x,y,z) c(x,y,z) d(x,y,z)", rule("chunk")));
+        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (FUNCALL (DEREF (VAR zzz) (VAR i)) (ARGS EXPLIST))))", parse("zzz[i]()", rule("chunk")));
+        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (ASSIGN (VARLIST (VAR val)) (EXPLIST (FUNCALL (DEREF (VAR e) (VAR i)) (ARGS EXPLIST))))))", parse("val = e[i]()", rule("chunk")));
+        assertTree(LuaParser.CHUNK, "(CHUNK (STATEMENTS (ASSIGN (VARLIST (VAR a) (VAR b)) (EXPLIST 1 (SINGLE (FUNCALL (VAR f) (ARGS EXPLIST)))))))", parse("a, b = 1, (f())", rule("chunk")));
     }
 
+    @Test
+    public void testTableConstructor() throws Exception
+    {
+        assertTree(LuaParser.TBLCTOR, "(TBLCTOR (TBLFIELD (FUNCALL (VAR f) (ARGS (EXPLIST 1))) (VAR g)) (TBLFIELD (STRING x)) (TBLFIELD (STRING y)) (TBLFIELD x 1) (TBLFIELD (FUNCALL (VAR f) (ARGS (EXPLIST (VAR x))))) (TBLFIELD 30 23) (TBLFIELD 45))", parse("{ [f(1)] = g; \"x\", \"y\"; x = 1, f(x), [30] = 23; 45 }", rule("tableconstructor")));
+    }
 
+    @Test
     public void test() throws Exception
     {
         assertTree(LuaParser.NAMELIST, "(NAMELIST abc )", parse("abc", rule("namelist")));
@@ -133,33 +139,71 @@ public class LuaParserTest
         assertTree(LuaParser.NAMELIST, "(NAMELIST abc def)", parse("abc,  def", rule("namelist")));
         assertTree(LuaParser.NAMELIST, "(NAMELIST abc def)", parse("abc --[=[ roo ]=], def-- simple comment\n", rule("namelist")));
 
-        assertTree(LuaParser.ASSIGN, "(ASSIGN (VARLIST (VAR i) (VAR a (DEREF (VAR i)))) (EXPLIST (+ (VAR i) 1) 20))", parse("i, a[i] = i+1, 20", rule("stat")));
+        assertTree(LuaParser.ASSIGN, "(ASSIGN (VARLIST (VAR i) (DEREF (VAR a) (VAR i))) (EXPLIST (+ (VAR i) 1) 20))", parse("i, a[i] = i+1, 20", rule("stat")));
 
-        assertTree(LuaParser.FNAMETHIS, "(FNAMETHIS foo b c d e)", parse("@foo.b.c.d:e", rule("funcname")));
+        assertTree(LuaParser.FNAMETHIS, "(FNAMETHIS foo b c d e)", parse("foo.b.c.d:e", rule("funcname")));
 
-        print(Work.<LuaParser>generateParser("do\n" +
-                                             "  local var, limit, step = tonumber(e1), tonumber(e2), tonumber(e3)\n" +
-                                             "  if not (var and limit and step) then error() end\n" +
-                                             "  while (step > 0 and var <= limit) or (step <= 0 and var >= limit) do\n" +
-                                             "    local v = var\n" +
-                                             "    print(v)\n" +
-                                             "    var = var + step\n" +
-                                             "  end\n" +
-                                             "end\n" +
-                                             "i = i + 1").chunk());
+        assertTree(LuaParser.CHUNK,
+                   "(CHUNK (STATEMENTS " +
+                   "    (BLOCK " +
+                   "        (CHUNK (STATEMENTS " +
+                   "            (LOCAL " +
+                   "                (NAMELIST var limit step) " +
+                   "                (EXPLIST " +
+                   "                    (FUNCALL (VAR tonumber) (ARGS (EXPLIST (VAR e1)))) " +
+                   "                    (FUNCALL (VAR tonumber) (ARGS (EXPLIST (VAR e2)))) " +
+                   "                    (FUNCALL (VAR tonumber) (ARGS (EXPLIST (VAR e3)))))) " +
+                   "            (IF (not (SINGLE (and (VAR var) (VAR limit) (VAR step)))) " +
+                   "                (BLOCK " +
+                   "                    (CHUNK (STATEMENTS " +
+                   "                        (FUNCALL (VAR error) (ARGS EXPLIST)))))) " +
+                   "            (WHILE (or (SINGLE (and (> (VAR step) 0) (<= (VAR var) (VAR limit)))) (SINGLE (and (<= (VAR step) 0) (>= (VAR var) (VAR limit))))) " +
+                   "                (BLOCK " +
+                   "                    (CHUNK (STATEMENTS " +
+                   "                        (LOCAL (NAMELIST v) (EXPLIST (VAR var))) " +
+                   "                        (FUNCALL (VAR print) (ARGS (EXPLIST (VAR v)))) " +
+                   "                        (ASSIGN (VARLIST (VAR var)) (EXPLIST (+ (VAR var) (VAR step))))))))))) " +
+                   "    (ASSIGN (VARLIST (VAR i)) (EXPLIST (+ (VAR i) 1)))))",
+                   parse("do\n" +
+                         "  local var, limit, step = tonumber(e1), tonumber(e2), tonumber(e3)\n" +
+                         "  if not (var and limit and step) then error() end\n" +
+                         "  while (step > 0 and var <= limit) or (step <= 0 and var >= limit) do\n" +
+                         "    local v = var\n" +
+                         "    print(v)\n" +
+                         "    var = var + step\n" +
+                         "  end\n" +
+                         "end\n" +
+                         "i = i + 1", rule("chunk")));
 
-        print(Work.<LuaParser>generateParser("x = 10                -- global variable\n" +
-                                             "do                    -- new block\n" +
-                                             "  local x = x         -- new 'x', with value 10\n" +
-                                             "  print(x)            --> 10\n" +
-                                             "  x = x+1\n" +
-                                             "  do                  -- another block\n" +
-                                             "    local x = x+1     -- another 'x'\n" +
-                                             "    print(x)          --> 12\n" +
-                                             "  end\n" +
-                                             "  print(x)            --> 11\n" +
-                                             "end\n" +
-                                             "print(x)              --> 10  (the global one)\n").chunk());
+        assertTree(LuaParser.CHUNK,
+                   "(CHUNK " +
+                   "    (STATEMENTS " +
+                   "        (ASSIGN (VARLIST (VAR x)) (EXPLIST 10)) " +
+                   "        (BLOCK " +
+                   "            (CHUNK " +
+                   "                (STATEMENTS " +
+                   "                    (LOCAL (NAMELIST x) (EXPLIST (VAR x))) " +
+                   "                    (FUNCALL (VAR print) (ARGS (EXPLIST (VAR x)))) " +
+                   "                    (ASSIGN (VARLIST (VAR x)) (EXPLIST (+ (VAR x) 1))) " +
+                   "                    (BLOCK " +
+                   "                        (CHUNK " +
+                   "                            (STATEMENTS " +
+                   "                                (LOCAL (NAMELIST x) (EXPLIST (+ (VAR x) 1))) " +
+                   "                                (FUNCALL (VAR print) (ARGS (EXPLIST (VAR x))))))) " +
+                   "                    (FUNCALL (VAR print) (ARGS (EXPLIST (VAR x))))))) " +
+                   "        (FUNCALL (VAR print) (ARGS (EXPLIST (VAR x))))))",
+                   parse("x = 10                -- global variable\n" +
+                         "do                    -- new block\n" +
+                         "  local x = x         -- new 'x', with value 10\n" +
+                         "  print(x)            --> 10\n" +
+                         "  x = x+1\n" +
+                         "  do                  -- another block\n" +
+                         "    local x = x+1     -- another 'x'\n" +
+                         "    print(x)          --> 12\n" +
+                         "  end\n" +
+                         "  print(x)            --> 11\n" +
+                         "end\n" +
+                         "print(x)              --> 10  (the global one)\n", rule("chunk")));
 
         print(Work.<LuaParser>generateParser("a = {}\n" +
                                              "local x = 20\n" +
@@ -168,30 +212,10 @@ public class LuaParserTest
                                              "  a[i] = function () y=y+1; return x+y end\n" +
                                              "end").chunk());
 
-        print(Work.<LuaParser>generateParser("do\n" +
-                                             "       local var, limit, step = tonumber(e1), tonumber(e2), tonumber(e3)\n" +
-                                             "       if not (var and limit and step) then error() end\n" +
-                                             "       while (step > 0 and var <= limit) or (step <= 0 and var >= limit) do\n" +
-                                             "         local v = var\n" +
-                                             "         print(v)\n" +
-                                             "         var = var + step\n" +
-                                             "       end\n" +
-                                             "     end").chunk());
-
         print(Work.<LuaParser>generateParser("i, a[i] = i+1, (f(x,y,z))").chunk());
 
-        print(Work.<LuaParser>generateParser("do\n" +
-                                             "       local var, limit, step = tonumber(e1), tonumber(e2), tonumber(e3)\n" +
-                                             "       if not (var and limit and step) then error() end\n" +
-                                             "       while (step > 0 and var <= limit) or (step <= 0 and var >= limit) do\n" +
-                                             "         local v = var\n" +
-                                             "         print(v)\n" +
-                                             "         var = var + step\n" +
-                                             "       end\n" +
-                                             "     end").chunk());
-
         assertTree(LuaParser.CHUNK,
-                   "(CHUNK (STATEMENTS (BLOCK (CHUNK (STATEMENTS (LOCAL (NAMELIST var limit step) (EXPLIST (VAR tonumber) (ARGS (EXPLIST (VAR e1))) (VAR tonumber) (ARGS (EXPLIST (VAR e2))) (VAR tonumber) (ARGS (EXPLIST (VAR e3))))) (IF (not (SINGLE (and (VAR var) (VAR limit) (VAR step)))) (BLOCK (CHUNK (STATEMENTS (FUNCALL (VAR error) (ARGS EXPLIST)))))) (WHILE (or (SINGLE (and (> (VAR step) 0) (<= (VAR var) (VAR limit)))) (SINGLE (and (<= (VAR step) 0) (>= (VAR var) (VAR limit))))) (BLOCK (CHUNK (STATEMENTS (LOCAL (NAMELIST v) (EXPLIST (VAR var))) (FUNCALL (VAR print) (ARGS (EXPLIST (VAR v)))) (ASSIGN (VARLIST (VAR var)) (EXPLIST (+ (VAR var) (VAR step)))))))))))))",
+                   "(CHUNK (STATEMENTS (BLOCK (CHUNK (STATEMENTS (LOCAL (NAMELIST var limit step) (EXPLIST (FUNCALL (VAR tonumber) (ARGS (EXPLIST (VAR e1)))) (FUNCALL (VAR tonumber) (ARGS (EXPLIST (VAR e2)))) (FUNCALL (VAR tonumber) (ARGS (EXPLIST (VAR e3)))))) (IF (not (SINGLE (and (VAR var) (VAR limit) (VAR step)))) (BLOCK (CHUNK (STATEMENTS (FUNCALL (VAR error) (ARGS EXPLIST)))))) (WHILE (or (SINGLE (and (> (VAR step) 0) (<= (VAR var) (VAR limit)))) (SINGLE (and (<= (VAR step) 0) (>= (VAR var) (VAR limit))))) (BLOCK (CHUNK (STATEMENTS (LOCAL (NAMELIST v) (EXPLIST (VAR var))) (FUNCALL (VAR print) (ARGS (EXPLIST (VAR v)))) (ASSIGN (VARLIST (VAR var)) (EXPLIST (+ (VAR var) (VAR step)))))))))))))",
                    parse("do\n" +
                          "       local var, limit, step = tonumber(e1), tonumber(e2), tonumber(e3)\n" +
                          "       if not (var and limit and step) then error() end\n" +
@@ -210,6 +234,7 @@ public class LuaParserTest
 
     }
 
+    @Test
     public void testOld() throws Exception
     {
         print(Work.<LuaParser>generateParser("i, a:foo(1, 2, 3)[i] = i+1, 20").chunk());

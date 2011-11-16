@@ -49,13 +49,10 @@ tokens {
     STATEMENTS;
     STRING;
     TBLCTOR;
-    TBLIDX;
-    TBLREF;
+    TBLFIELD;
     VAR;
     VARLIST;
     WHILE;
-    
-    FOO;
 }
 
 @header
@@ -176,26 +173,22 @@ varlist
     ;
 
 var
-    : NAME nameAndArgs* '[' exp ']' (nameAndArgs* '[' exp ']')*
-    | NAME nameAndArgs* '.' NAME (nameAndArgs* '.' NAME)*
-
-    | varPrefix '.' NAME varEnd*
-    | NAME '.' NAME varEnd*
-
+    : (varPrefix varDeref -> ^(DEREF varPrefix varDeref)) (vd=varDeref -> ^(DEREF $var $vd))*
     | NAME -> ^(VAR NAME)
-    | '(' exp ')' nameAndArgs* '[' exp ']' (nameAndArgs* '[' exp ']')*
-    | '(' exp ')' nameAndArgs* '.' NAME (nameAndArgs* '.' NAME)*
+    ;
+
+varDeref
+    : '[' exp ']' -> exp
+    | '.' NAME -> ^(VAR NAME)
     ;
 
 varPrefix
-    : (NAME nameAndArgs-> ^(FUNCALL NAME nameAndArgs)) (naa=nameAndArgs -> ^(FUNCALL $varPrefix $naa))*
+    : (NAME nameAndArgs-> ^(FUNCALL NAME nameAndArgs)) (naa=nameAndArgs -> ^(FUNCALL $varPrefix $naa))+
+    | NAME nameAndArgs-> ^(FUNCALL NAME nameAndArgs)
+    | '(' exp ')' -> ^(SINGLE exp)
+    | NAME -> ^(VAR NAME)
     ;
-
-varEnd
-    : nameAndArgs* '[' exp ']' -> ^(FOO nameAndArgs* exp)
-    | nameAndArgs* '.' NAME -> ^(DEREF nameAndArgs* NAME)
-    ;
-
+    
 prefixexp
     : (varOrExp nameAndArgs -> ^(FUNCALL varOrExp nameAndArgs)) (naa=nameAndArgs ->  ^(FUNCALL $prefixexp $naa))*
     | varOrExp
@@ -306,9 +299,9 @@ fieldlist
     ;
 
 field
-    : '[' exp ']' '=' exp
-    | NAME '=' exp
-    | exp
+    : '[' exp ']' '=' exp -> ^(TBLFIELD exp exp)
+    | NAME '=' exp -> ^(TBLFIELD NAME exp)
+    | exp -> ^(TBLFIELD exp)
     ;
 
 fieldsep
