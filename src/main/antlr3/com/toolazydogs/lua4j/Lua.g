@@ -179,7 +179,7 @@ var
 
 varDeref
     : '[' exp ']' -> exp
-    | '.' NAME -> ^(VAR NAME)
+    | '.' NAME -> ^(STRING NAME)
     ;
 
 varPrefix
